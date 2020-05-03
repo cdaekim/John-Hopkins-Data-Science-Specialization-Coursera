@@ -1,0 +1,60 @@
+#script to calculate average (without null values) of a specific substance within certain csv numbers
+pollutantmean <- function(directory,pollutant, id=1:332){
+     setwd(paste("/Users/privateWork/Desktop/Coursera/JHU Data Science Specialization/Courses/R Programming/Week 2", directory, sep="/"))
+     filenames <- list.files(full.names=TRUE) #retrieve the names of all csv in the directory and store in a vector
+     AllCSVs <- lapply(filenames, function(i){
+         read.table(i, header=T, sep=",")    
+     })                                       #apply read.table function to all the filenames within the directory
+     df <- do.call(rbind.data.frame, AllCSVs) #merge all csvs into dataframe by row
+     dfsubset <- df[is.element(df$ID, id),]   #subset dataframe by user input vector  
+     if (pollutant == "sulfate") {            #condition validation for user input
+         g <- mean(dfsubset$sulfate, na.rm=TRUE)} else if (pollutant =="nitrate") {
+         g <- mean(dfsubset$nitrate, na.rm=TRUE)} else {
+             print("Incorrect substance. Please try again")
+         }
+     return(g)                                #returns 
+ }
+ #script to calculate number of complete observations within specific range of csvs
+ complete <- function(directory, id=1:332) {
+    setwd(paste("/Users/privateWork/Desktop/Coursera/JHU Data Science Specialization/Courses/R Programming/Week 2", directory, sep="/"))
+    filenames <- list.files(full.names=TRUE)
+    AllCSV <- lapply(filenames, function(i){
+        read.table(i, header=TRUE, sep=",")
+    })
+    df <- do.call(rbind.data.frame, AllCSV)
+    dftotal = data.frame()                    #initialize empty dataframe
+    for (x in id){                            #loop by vector length
+        dfsubset <- df[is.element(df$ID,x),]  #subset depending on vector element and column ID
+        iterationNumber <- x                  #store vector element in variable
+        nobs <- sum(complete.cases(dfsubset)) #store complete number of observations from the subsetted dataframe
+        dfsubtotal <- data.frame("ID"=iterationNumber, "nobs"=nobs) #store variables within defined columns
+        dftotal <- rbind(dftotal, dfsubtotal) #merge and append dataframe
+    }
+    return(dftotal)                           #returns dataframe
+}
+
+#script to calculate correlation within dataframes that meet a certain user defined threshold of completed observations
+
+corr <- function(directory, threshold=0){
+    setwd(paste("/Users/privateWork/Desktop/Coursera/JHU Data Science Specialization/Courses/R Programming/Week 2", directory, sep="/"))
+    
+    filenames <- list.files(full.names=T)
+    
+    AllCSV3 <- lapply(filenames, function(b){
+        read.table(b, header=T,sep=",")
+    })
+    
+    df3 <- do.call(rbind.data.frame, AllCSV3)
+    dfComplete <- complete(directory, id=1:332)
+    
+    for (x in threshold){ #loop for elements within user variable. Since threshold is defined as an integer, user input should be an integer. This part of the code is a mistake in actuality. I think I can complete forgo this nested for loop. But it worked...                              
+        listIDs <- dfComplete$ID[dfComplete$nobs>threshold] #call the ID numbers where the respective number of complete observations is greater than the user defined threshold and store
+        vectorCorr <- c() #initialize an empty vector
+        for (y in listIDs){ #loop y amount of times within listID length
+            dfsubset3 <- dfComplete[is.element(dfComplete$ID, y),] #subset dataframe called from complete function with the specific vector element that corresponds to the ID
+            CorrsToDo <- c(cor(dfsubset3$nitrate, dfsubset3$sulfate, use="pairwise.complete.obs")) #create a vector from the pair wise correlation between two substances only with complete observations of the subsetted dataframe 
+            vectorCorr <- append(vectorCorr,CorrsToDo) #append vector from above to the vector outside this for loop
+        }
+    }
+    return(vectorCorr) #return vector from for loop
+}
