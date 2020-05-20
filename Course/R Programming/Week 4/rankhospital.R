@@ -1,5 +1,5 @@
 rankhospital <- function(state,outcome,num){
-  ## Read data
+  ### Read data
   outcome_data <- read.csv("outcome-of-care-measures.csv")
   
   ## coerce relevant columns stepwise from factors to characters and numeric
